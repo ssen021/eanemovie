@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.CommentRepository">
+
+    <resultMap id="CommentResult" type="Comment">
+        <id property="id" column="id" />
+        <result property="reviewId" column="review_id" />
+        <result property="memberId" column="member_id" />
+        <result property="content" column="content" />
+        <result property="reportingDate" column="reporting_date" />
+        <association property="review" column="review_id" javaType="Review">
+            <id property="id" column="review_id" />
+            <result property="title" column="title" />
+        </association>
+        <association property="member" column="member_id" javaType="Member">
+            <id property="id" column="member_id" />
+            <result property="name" column="name" />
+            <result property="image" column="member_image" />
+        </association>
+    </resultMap>
+
+    <select id="findAll" resultType="Comment" resultMap="CommentResult">
+        select comment.*, review.title, member.name, member.image as member_image
+        from comment inner join review on comment.review_id = review.id
+        inner join member on comment.member_id = member.id
+    </select>
+
+    <select id="findById" parameterType="Comment" resultType="Comment" resultMap="CommentResult">
+        select comment.*, review.title , member.name, member.image as member_image
+        from comment inner join review on comment.review_id = review.id
+        inner join member on comment.member_id = member.id
+        where comment.id = #{id}
+    </select>
+
+    <select id="findByReviewId" parameterType="Comment" resultType="Comment" resultMap="CommentResult">
+        select * from ((select comment.*, review.title , member.name, member.image as member_image
+        from comment inner join review on comment.review_id = review.id
+            inner join member on comment.member_id = member.id
+        where review.id = #{id} ) as s)
+        order by s.reporting_date desc
+    </select>
+
+    <select id="findByReviewIdPaging" parameterType="Comment" resultType="Comment" resultMap="CommentResult">
+        select * from ((select comment.*, review.title , member.name, member.image as member_image
+                        from comment inner join review on comment.review_id = review.id
+                                     inner join member on comment.member_id = member.id
+                        where review.id = #{reviewId} ) as s)
+        order by s.reporting_date desc
+            limit #{paginationInfo.firstRecordIndex}, #{recordsPerPage}
+    </select>
+
+    <select id="findByReviewIdPagingCount" parameterType="Comment" resultType="int">
+        select count(*) from ((select comment.*, review.title , member.name, member.image as member_image
+                               from comment inner join review on comment.review_id = review.id
+                                            inner join member on comment.member_id = member.id
+                               where review.id = #{reviewId} ) as s)
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Comment">
+        insert into comment(review_id, member_id, content)
+        values (#{reviewId}, #{memberId}, #{content})
+    </insert>
+
+    <update id="update" parameterType="Comment">
+        update comment
+        set review_id=#{reviewId}, member_id=#{memberId}, content=#{content}
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Comment">
+        delete from comment where id = #{id}
+    </delete>
+</mapper>
