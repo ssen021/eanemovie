@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.MovieActorRepository">
+    <resultMap id="resultMovieActor" type="MovieActor">
+        <id property="id" column="id"/>
+        <result property="role" column="role" />
+        <association property="movie" column="movie_id" resultMap="movieMap" />
+        <association property="actor" column="actor_id" resultMap="actorMap" />
+    </resultMap>
+
+    <resultMap id="movieMap" type="Movie">
+        <id property="id" column="movieId" />
+        <result property="title" column="title" />
+    </resultMap>
+
+    <resultMap id="actorMap" type="Actor" >
+        <id property="id" column="actorId" />
+        <result property="name" column="name" />
+        <result property="storeFilename" column="store_filename" />
+    </resultMap>
+
+    <select id="findByMovieId" resultMap="resultMovieActor" parameterType="Long">
+        select ma.*, m.title, a.name, m.id as movieId, a.id as actorId, a.store_filename
+        from movie_actor ma
+        inner join movie m on ma.movie_id = m.id
+        inner join actor a on ma.actor_id = a.id
+        where ma.movie_id = #{id}
+    </select>
+
+    <select id="findById" resultMap="resultMovieActor" parameterType="Long">
+        select ma.*, m.title, a.name, m.id as movieId, a.id as actorId
+        from movie_actor ma
+        inner join movie m on ma.movie_id = m.id
+        inner join actor a on ma.actor_id = a.id
+        where ma.id = #{id}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="com.induk.cinema.dto.MovieActorForm">
+        insert into movie_actor(movie_id, actor_id, role)
+        values (#{movieId}, #{actorId}, #{role})
+    </insert>
+
+    <update id="update" parameterType="com.induk.cinema.dto.MovieActorForm">
+        update movie_actor
+        set actor_id=#{actorId}, role=#{role}
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Long">
+        delete from movie_actor where id = #{id}
+    </delete>
+</mapper>

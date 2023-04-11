@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.MovieAdRepository">
+    <resultMap id="resultMovieAd" type="MovieAd">
+        <id property="id" column="id"/>
+        <result property="storeFilename" column="store_filename"/>
+        <result property="uploadFilename" column="upload_filename"/>
+        <result property="path" column="path" />
+        <result property="kind" column="kind" />
+        <association property="movie" column="movie_id" resultMap="movieMap"/>
+    </resultMap>
+
+    <resultMap id="movieMap" type="Movie">
+        <id property="id" column="movieId"/>
+        <result property="title" column="title"/>
+    </resultMap>
+
+    <select id="findByMovieId" resultMap="resultMovieAd" parameterType="Long">
+        select mad.*, m.id as movieId, m.title
+        from movie_ad mad
+        inner join movie m on mad.movie_id = m.id
+        where mad.movie_id=#{id}
+    </select>
+
+    <select id="findById" resultMap="resultMovieAd" parameterType="Long">
+        select mad.*, m.id as movieId, m.title
+        from movie_ad mad
+        inner join movie m on mad.movie_id = m.id
+        where mad.id=#{id}
+    </select>
+
+    <select id="findByImage" resultMap="resultMovieAd" parameterType="Long">
+        select mad.*
+        from movie_ad mad
+        inner join movie m on mad.movie_id = m.id
+        where m.id=#{id} and mad.kind like 'image'
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="java.util.List">
+        insert into movie_ad(movie_id, store_filename, upload_filename, path, kind) values
+        <foreach collection="list" item="item" separator=", ">
+            (#{item.movieId}, #{item.storeFilename}, #{item.uploadFilename}, #{item.path}, #{item.kind})
+        </foreach>
+    </insert>
+
+    <update id="update" parameterType="com.induk.cinema.dto.MovieAdForm">
+        update movie_ad
+        set store_filename=#{storeFilename}, upload_filename=#{uploadFilename}, path=#{path}
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Long">
+        delete from movie_ad where id=#{id}
+    </delete>
+</mapper>

@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.ReviewRepository">
+    <resultMap id="reviewResult" type="Review">
+        <id property="id" column="id" />
+        <result property="title" column="title" />
+        <result property="content" column="content" />
+        <result property="image" column="image" />
+        <result property="view" column="view" />
+        <result property="memberId" column="member_id" />
+        <result property="movieId" column="movie_id" />
+        <result property="reportingDate" column="reporting_date" />
+        <result property="commentCount" column="comment_count" />
+        <association property="member" column="member_id" javaType="Member">
+            <id property="id" column="member_id" />
+            <result property="name" column="member_name" />
+            <result property="image" column="member_image" />
+        </association>
+        <association property="movie" column="movie_id" javaType="Movie">
+            <id property="id" column="movie_id" />
+            <result property="title" column="movie_title" />
+        </association>
+    </resultMap>
+
+    <resultMap id="reviewByMovieResult" type="com.induk.cinema.dto.ReviewByMovie">
+        <result property="movieId" column="movie_id" />
+        <result property="movieTitle" column="movie_title" />
+        <result property="reviewCount" column="review_count" />
+    </resultMap>
+
+    <select id="findAll" resultType="Review" resultMap="reviewResult">
+        select * from
+            (select review.*, member.name as member_name, member.image as member_image, movie.title as movie_title,comment_count
+                from review
+                    inner join member on review.member_id = member.id
+                    inner join movie on review.movie_id = movie.id
+                    left join (select *, count(*) as comment_count from comment group by comment.review_id) as comments
+                        on review.id = comments.review_id)
+            as r
+        ORDER by r.reporting_date desc
+    </select>
+
+    <select id="findAllByKeyword" resultType="Review" resultMap="reviewResult">
+        select * from
+            (select review.*, member.name as member_name, member.image as member_image, movie.title as movie_title,comment_count
+                from review
+                    inner join member on review.member_id = member.id
+                    inner join movie on review.movie_id = movie.id
+                    left join (select *, count(*) as comment_count from comment group by comment.review_id) as comments
+                        on review.id = comments.review_id)
+            as r
+        where r.title like concat('%', #{searchText}, '%') or r.member_name like concat('%', #{searchText}, '%') or r.movie_title like concat('%', #{searchText}, '%')
+          <if test="searchMovieId > 0">
+            and r.movie_id = #{searchMovieId}
+        </if>
+        <choose>
+            <when test="sortType == '최신순'">
+                ORDER by r.reporting_date desc
+            </when>
+            <when test="sortType == '인기순'">
+                ORDER by r.view desc
+            </when>
+        </choose>
+        limit #{paginationInfo.firstRecordIndex}, #{recordsPerPage}
+    </select>
+
+    <select id="findAllByKeywordCount" resultType="int" parameterType="Review">
+        select count(*) from
+        (select review.*, member.name as member_name, member.image as member_image, movie.title as movie_title,comment_count
+        from review
+        inner join member on review.member_id = member.id
+        inner join movie on review.movie_id = movie.id
+        left join (select *, count(*) as comment_count from comment group by comment.review_id) as comments
+        on review.id = comments.review_id)
+        as r
+        where (r.title like concat('%', #{searchText}, '%') or r.member_name like concat('%', #{searchText}, '%') or r.movie_title like concat('%', #{searchText}, '%'))
+        <if test="searchMovieId > 0">
+            and r.movie_id = #{searchMovieId}
+        </if>
+    </select>
+
+
+    <select id="findAllCountByMovie" resultType="com.induk.cinema.dto.ReviewByMovie" resultMap="reviewByMovieResult">
+        SELECT movie.title as movie_title, count(*) as review_count, review.movie_id as movie_id
+        FROM review
+            left join movie on review.movie_id = movie.id
+        GROUP by movie.id
+        ORDER by review_count desc
+        limit 10
+    </select>
+
+
+    <select id="findById" parameterType="Review" resultType="Review" resultMap="reviewResult">
+        select review.*, member.name as member_name, movie.title as movie_title, comment_count
+        from review inner join member on review.member_id = member.id
+                    inner join movie on review.movie_id = movie.id
+                    left join ((select review_id, count(*) as comment_count from comment group by comment.review_id) as comments)
+                        on review.id = comments.review_id
+        where review.id = #{id}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Review">
+        insert into review(movie_id, member_id, title, content, image)
+        values (#{movieId}, #{memberId}, #{title}, #{content}, #{image})
+    </insert>
+
+    <update id="update" parameterType="Review">
+        update review
+        set movie_id=${movieId}, member_id=#{memberId}, title=#{title}, content=#{content}, image=#{image}
+        where id=#{id}
+    </update>
+
+    <update id="viewCounting" parameterType="long">
+        update review
+        set view=view+1
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Review">
+        delete from review where id = #{id}
+    </delete>
+</mapper>
