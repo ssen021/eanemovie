@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.MemberRepository">
+    <resultMap id="memberResult" type="Member">
+        <id property="id" column="id" />
+        <result property="name" column="name" />
+        <result property="email" column="email" />
+        <result property="password" column="password" />
+        <result property="address" column="address" />
+        <result property="image" column="image" />
+        <result property="subscriptionDate" column="subscription_date" />
+        <result property="admin" column="admin" />
+    </resultMap>
+
+    <select id="findAll" resultType="Member" resultMap="memberResult">
+        select * from member
+    </select>
+
+    <select id="findById" parameterType="Member" resultType="Member" resultMap="memberResult">
+        select * from member where id = #{id}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Member">
+        insert into member(name, email, password, address, image, admin)
+        values (#{name}, #{email}, #{password}, #{address}, #{image}, #{admin})
+    </insert>
+
+    <update id="update" parameterType="Member">
+        update member
+        set name=#{name}, email=#{email}, password=#{password}, address=#{address}, image=#{image}, admin=#{admin}
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Member">
+        delete from member where id = #{id};
+    </delete>
+
+    <select id="login" resultType="Member" resultMap="memberResult">
+        select * from member where email = #{email} and password = #{password}
+    </select>
+
+    <select id="countByEmail" resultType="int">
+        select count(*) from member where email = #{email}
+    </select>
+</mapper>
