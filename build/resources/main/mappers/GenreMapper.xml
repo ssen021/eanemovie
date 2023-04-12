@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.GenreRepository">
+    <select id="findAll" resultType="Genre">
+        select * from genre
+    </select>
+
+    <select id="findById" parameterType="Long" resultType="Genre">
+        select * from genre where id = #{id}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Genre">
+        insert into genre(name)
+        values (#{name})
+    </insert>
+
+    <update id="update" parameterType="Genre">
+        update genre
+        set name=#{name}
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Long">
+        delete from genre where id = #{id}
+    </delete>
+</mapper>

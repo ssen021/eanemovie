@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.induk.cinema.repository.EventRepository">
+    <select id="findAll" resultType="Event">
+        select * from event
+    </select>
+
+    <select id="findAllSortReportingDate" resultType="Event">
+        select * from event order by reporting_date desc limit 0, 3
+    </select>
+
+    <select id="findById" parameterType="Long" resultType="Event">
+        select * from event where id=#{id}
+    </select>
+
+    <insert id="save" useGeneratedKeys="true" keyProperty="id" parameterType="Event">
+        insert into event(store_filename, upload_filename, path, title, content, start_date, end_date, reporting_date, thum_store_filename, thum_upload_filename, thum_path, view_count)
+        values (#{storeFilename}, #{uploadFilename}, #{path}, #{title}, #{content}, #{startDate}, #{endDate}, #{reportingDate}, #{thumStoreFilename}, #{thumUploadFilename}, #{thumPath}, 0)
+    </insert>
+
+    <update id="update" parameterType="Event">
+        update event
+        set store_filename=#{storeFilename}, upload_filename=#{uploadFilename}, path=#{path}, title=#{title}, content=#{content}, start_date=#{startDate}, end_date=#{endDate},
+            thum_store_filename=#{thumStoreFilename}, thum_upload_filename=#{thumUploadFilename}, thum_path=#{thumPath}
+        where id=#{id}
+    </update>
+
+    <delete id="delete" parameterType="Long">
+        delete from event where id=#{id}
+    </delete>
+
+    <select id="findByTitleSort" parameterType="HashMap" resultType="Event">
+        select DISTINCT event.*
+        from event, eventCode
+        where event.title like concat('%', #{searchWord}, '%')
+        <choose>
+            <when test="status == 1">
+                <![CDATA[and event.start_date <= '2021-07-13' and '2021-07-13' <= event.end_date]]>
+            </when>
+            <when test="status == 2">
+                <![CDATA[and event.end_date < '2021-07-13']]>
+            </when>
+            <when test="status == 3">
+                <![CDATA[and event.start_date > '2021-07-13']]>
+            </when>
+        </choose>
+        <choose>
+            <when test="code_status == 1">
+                <![CDATA[and (event.id not in (select eventCode.event_id from eventCode) or event.id = eventCode.event_id)]]>
+            </when>
+            <when test="code_status == 2">
+                <![CDATA[and event.id = eventCode.event_id]]>
+            </when>
+            <when test="code_status == 3">
+                <![CDATA[and event.id not in (select eventCode.event_id from eventCode)]]>
+            </when>
+        </choose>
+        <choose>
+            <when test="sort == 1"> /*인기순*/
+                order by event.view_count desc
+            </when>
+            <when test="sort == 2"> /*최신순*/
+                order by event.reporting_date desc
+            </when>
+        </choose>
+    </select>
+
+    <!--조회수 증가-->
+    <update id="updateViewCount" parameterType="Long">
+        update event
+        set view_count = view_count + 1
+        where id = #{id}
+    </update>
+</mapper>
