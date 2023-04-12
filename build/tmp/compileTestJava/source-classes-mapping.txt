@@ -1,2 +1,0 @@
-com/induk/cinema/CinemaApplicationTests.java
- com.induk.cinema.CinemaApplicationTests
